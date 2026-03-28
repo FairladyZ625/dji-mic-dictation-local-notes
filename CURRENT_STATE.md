@@ -19,7 +19,7 @@
 - Trigger mode: `keyboard+dji`
 - Notification sound: `Sosumi`
 - Ready HUD: enabled
-- Review/send window: `3s`
+- Review/send window: `8s`
 - Manual GUI confirm fallback: `1.2s`
 
 ## Active Local Overrides

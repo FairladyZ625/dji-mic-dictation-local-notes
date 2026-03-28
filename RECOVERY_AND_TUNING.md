@@ -92,7 +92,7 @@ Search key:
 
 Current value:
 
-- `3s`
+- `8s`
 
 Meaning:
 
@@ -129,8 +129,9 @@ Raise:
 
 Good candidates:
 
-- `4`
-- `5`
+- `6`
+- `8`
+- `10`
 
 Use this when you can already enter ready-to-send state, but the confirm window expires too quickly.
 

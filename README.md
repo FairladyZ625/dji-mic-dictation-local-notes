@@ -1,8 +1,18 @@
 # DJI Mic Dictation Local Notes
 
-这是一份本机可用的 `dji-mic-dictation` 本地记录仓库。
+An open-source, machine-verified reference repo for a working `DJI Mic Mini + Karabiner + dji-mic-dictation` setup on macOS.
 
-目标不是替代上游项目，而是把这台 Mac 上已经验证过的实际改造、路径、脚本快照和调参记录单独收口，避免以后只能回聊天记录里翻。
+它不是上游 `Johnixr/dji-mic-dictation` 的 fork，也不是替代品。
+它的定位是：
+
+- 记录这台 Mac 上已经验证通过的本地改造
+- 保存 live 脚本和配置快照
+- 提供一个可复刻、可交接、可继续调参的基线
+- 避免以后只能回聊天记录里翻
+
+## Upstream Reference
+
+- Upstream project: <https://github.com/Johnixr/dji-mic-dictation>
 
 ## 当前本机路径
 
@@ -17,7 +27,33 @@
 - DJI Mic Mini 按钮走同一套开始/结束逻辑
 - `micReset` 可以在状态机乱掉时一键清理 `/tmp/dji-dictation`
 - 当前 GUI 手动发送 fallback 阈值为 `1.2s`
-- 当前 review/send window 配置仍为 `3s`
+- 当前 review/send window 配置为 `8s`
+
+## One-command Restore
+
+This repo now includes a local restore helper:
+
+```bash
+./scripts/restore-live-config.sh
+```
+
+It copies the snapshotted files in this repo back to the live local paths:
+
+- `~/.config/dji-mic-dictation/reset-state.sh`
+- `~/.local/bin/micReset`
+- `~/.config/dji-mic-dictation/config.env`
+- `~/.config/dji-mic-dictation/install-state.json`
+- `~/.config/karabiner/scripts/dictation-enter.sh`
+
+## Copy To AI
+
+如果你想让另一个 AI 直接帮你在新电脑上复刻，优先把这份提示词整段复制给它：
+
+- [AI_SETUP_PROMPT.md](./AI_SETUP_PROMPT.md)
+
+如果你更希望 AI 直接看恢复脚本，也可以让它参考：
+
+- [scripts/restore-live-config.sh](./scripts/restore-live-config.sh)
 
 ## 仓库内容
 
@@ -37,6 +73,10 @@
   - `fn-dictation-rule.json`
   - `config.env`
   - `install-state.json`
+- [scripts/restore-live-config.sh](./scripts/restore-live-config.sh)
+  把当前仓库快照恢复到 live 本机路径的辅助脚本。
+- [AI_SETUP_PROMPT.md](./AI_SETUP_PROMPT.md)
+  给 AI 直接执行的复刻提示词。
 
 ## 快速操作
 
@@ -57,3 +97,7 @@ micReset
 - [RECOVERY_AND_TUNING.md](./RECOVERY_AND_TUNING.md)
 - [snapshots/dictation-enter.sh](./snapshots/dictation-enter.sh)
 - [snapshots/fn-dictation-rule.json](./snapshots/fn-dictation-rule.json)
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
