@@ -53,6 +53,7 @@ HUD_DAEMON_COMMAND_FILE="${HUD_DAEMON_COMMAND_FILE:-$STATE_DIR/send-window-hud.c
 HUD_DAEMON_READY_FILE="${HUD_DAEMON_READY_FILE:-$STATE_DIR/send-window-hud.ready}"
 HUD_DAEMON_READY_INTERVAL="${HUD_DAEMON_READY_INTERVAL:-0.01}"
 HUD_DAEMON_READY_POLLS="${HUD_DAEMON_READY_POLLS:-50}"
+RESET_HOLD_SECONDS="${RESET_HOLD_SECONDS:-3}"
 
 /bin/mkdir -p "$STATE_DIR"
 
@@ -133,6 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	let daemon: Bool
 	let controlPath: String?
 	let readyPath: String?
+	var labelText: String
 	let width: CGFloat = 132
 	let height: CGFloat = 34
 	let cornerRadius: CGFloat = 17
@@ -152,6 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		self.daemon = daemon
 		self.controlPath = controlPath
 		self.readyPath = readyPath
+		self.labelText = "Press to send"
 	}
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
@@ -207,9 +210,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		case "show":
 			let requestedWaitDuration = TimeInterval(parts.count > 1 ? parts[1] : "") ?? waitDuration
 			let requestedConfirmDuration = TimeInterval(parts.count > 2 ? parts[2] : "") ?? confirmDuration
+			labelText = "Press to send"
 			showPanel(waitDuration: requestedWaitDuration, confirmDuration: requestedConfirmDuration, terminateOnHide: false)
 		case "confirm":
 			let requestedDuration = TimeInterval(parts.count > 1 ? parts[1] : "") ?? confirmDuration
+			labelText = "Press to send"
+			startConfirmPhase(duration: requestedDuration, terminateOnHide: false)
+		case "reset":
+			let requestedDuration = TimeInterval(parts.count > 1 ? parts[1] : "") ?? 3
+			labelText = "Press to reset"
 			startConfirmPhase(duration: requestedDuration, terminateOnHide: false)
 		case "hide":
 			hidePanel()
@@ -291,7 +300,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		view.layer?.addSublayer(progressFillLayer)
 		self.progressFillLayer = progressFillLayer
 
-		let label = NSTextField(labelWithString: "Press to send")
+		let label = NSTextField(labelWithString: labelText)
 		label.textColor = textColor
 		label.font = .systemFont(ofSize: 13, weight: .regular)
 		label.alignment = .center
@@ -314,7 +323,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 		let shimmerMask = CATextLayer()
 		shimmerMask.string = NSAttributedString(
-			string: "Press to send",
+			string: labelText,
 			attributes: [
 				.font: NSFont.systemFont(ofSize: 13, weight: .regular),
 				.foregroundColor: NSColor.white,
@@ -626,6 +635,28 @@ show_send_window_hud() {
 show_send_window_hud_if_enabled() {
 	[ "$DJI_ENABLE_READY_HUD" = "1" ] || return 0
 	show_send_window_hud "$1" "$2" "$3"
+}
+
+show_reset_hold_hud() {
+	local hold_duration="${1:-$RESET_HOLD_SECONDS}"
+	if [ ! -x "$HUD_BIN" ]; then
+		ensure_send_window_hud_binary || {
+			log "hud reset skipped: binary_missing"
+			return 0
+		}
+	fi
+	if send_hud_daemon_command "reset|$hold_duration"; then
+		write_file ready_hud.pid "$(hud_daemon_pid)"
+		return 0
+	fi
+	stop_send_window_hud_daemon >/dev/null 2>&1 || true
+	"$HUD_BIN" 0 "$hold_duration" >/dev/null 2>&1 &
+	write_file ready_hud.pid "$!"
+}
+
+show_reset_hold_hud_if_enabled() {
+	[ "$DJI_ENABLE_READY_HUD" = "1" ] || return 0
+	show_reset_hold_hud "$1"
 }
 
 confirm_send_window_hud() {
@@ -1313,6 +1344,14 @@ open-window)
 	reuse_or_open_send_window open_window "$open_window_session_id" >/dev/null
 	;;
 
+reset-window)
+	show_reset_hold_hud_if_enabled "${2:-$RESET_HOLD_SECONDS}"
+	;;
+
+reset-window-hide)
+	dismiss_ready_hud
+	;;
+
 preconfirm)
 	dismiss_ready_hud
 	if transcript_ready_since_save; then
@@ -1359,5 +1398,11 @@ confirm)
 		release_send_state
 		exit "$send_status"
 	fi
+	;;
+
+reset)
+	dismiss_ready_hud
+	log "reset invoked hold=${RESET_HOLD_SECONDS}s"
+	"$DJI_CONFIG_DIR/reset-state.sh"
 	;;
 esac

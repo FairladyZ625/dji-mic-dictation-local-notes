@@ -223,9 +223,36 @@
             ]
           }
         },
-        "to": [
+        "parameters": {
+          "basic.to_delayed_action_delay_milliseconds": 250,
+          "basic.to_if_alone_timeout_milliseconds": 3000,
+          "basic.to_if_held_down_threshold_milliseconds": 3000
+        },
+        "to_after_key_up": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+          }
+        ],
+        "to_delayed_action": {
+          "to_if_canceled": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+            }
+          ],
+          "to_if_invoked": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window reset-window 3 2>/dev/null"
+            }
+          ]
+        },
+        "to_if_alone": [
           {
             "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-confirm confirm 2>/dev/null"
+          }
+        ],
+        "to_if_held_down": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset reset 2>/dev/null"
           }
         ],
         "type": "basic"
@@ -255,9 +282,36 @@
             ]
           }
         },
-        "to": [
+        "parameters": {
+          "basic.to_delayed_action_delay_milliseconds": 250,
+          "basic.to_if_alone_timeout_milliseconds": 3000,
+          "basic.to_if_held_down_threshold_milliseconds": 3000
+        },
+        "to_after_key_up": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+          }
+        ],
+        "to_delayed_action": {
+          "to_if_canceled": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+            }
+          ],
+          "to_if_invoked": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window reset-window 3 2>/dev/null"
+            }
+          ]
+        },
+        "to_if_alone": [
           {
             "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-preconfirm preconfirm 2>/dev/null"
+          }
+        ],
+        "to_if_held_down": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset reset 2>/dev/null"
           }
         ],
         "type": "basic"
@@ -297,7 +351,29 @@
             ]
           }
         },
-        "to": [
+        "parameters": {
+          "basic.to_delayed_action_delay_milliseconds": 250,
+          "basic.to_if_alone_timeout_milliseconds": 3000,
+          "basic.to_if_held_down_threshold_milliseconds": 3000
+        },
+        "to_after_key_up": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+          }
+        ],
+        "to_delayed_action": {
+          "to_if_canceled": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+            }
+          ],
+          "to_if_invoked": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window reset-window 3 2>/dev/null"
+            }
+          ]
+        },
+        "to_if_alone": [
           {
             "set_variable": {
               "name": "dji_dictation_active",
@@ -326,6 +402,11 @@
             "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-open-window open-window 2>/dev/null; /usr/bin/nohup ~/.config/karabiner/scripts/dictation-enter.sh route dji-watch watch 2>/dev/null &"
           }
         ],
+        "to_if_held_down": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset reset 2>/dev/null"
+          }
+        ],
         "type": "basic"
       },
       {
@@ -363,7 +444,29 @@
             ]
           }
         },
-        "to": [
+        "parameters": {
+          "basic.to_delayed_action_delay_milliseconds": 250,
+          "basic.to_if_alone_timeout_milliseconds": 3000,
+          "basic.to_if_held_down_threshold_milliseconds": 3000
+        },
+        "to_after_key_up": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+          }
+        ],
+        "to_delayed_action": {
+          "to_if_canceled": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window-hide reset-window-hide 2>/dev/null"
+            }
+          ],
+          "to_if_invoked": [
+            {
+              "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset-window reset-window 3 2>/dev/null"
+            }
+          ]
+        },
+        "to_if_alone": [
           {
             "hold_down_milliseconds": 80,
             "key_code": "fn"
@@ -375,9 +478,7 @@
           {
             "hold_down_milliseconds": 80,
             "key_code": "fn"
-          }
-        ],
-        "to_if_alone": [
+          },
           {
             "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-save save 2>/dev/null"
           },
@@ -386,6 +487,11 @@
               "name": "dji_dictation_active",
               "value": 1
             }
+          }
+        ],
+        "to_if_held_down": [
+          {
+            "shell_command": "~/.config/karabiner/scripts/dictation-enter.sh route dji-reset reset 2>/dev/null"
           }
         ],
         "type": "basic"

@@ -25,6 +25,7 @@ An open-source, machine-verified reference repo for a working `DJI Mic Mini + Ka
 
 - `Fn` 单按一次会被 Karabiner 映射成一组带间隔的双击 `fn`
 - DJI Mic Mini 按钮走同一套开始/结束逻辑
+- DJI Mic Mini 按钮长按 `3s` 会触发 reset，并显示 `Press to reset` 胶囊 HUD
 - `micReset` 可以在状态机乱掉时一键清理 `/tmp/dji-dictation`
 - 当前 GUI 手动发送 fallback 阈值为 `1.2s`
 - 当前 review/send window 配置为 `8s`

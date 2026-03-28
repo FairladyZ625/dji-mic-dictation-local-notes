@@ -19,6 +19,18 @@ It currently does two things:
    - `dji_watching=0`
    - `dji_ready_to_send=0`
 
+## Long-hold Reset
+
+There is also a hardware reset path on the DJI Mic button itself.
+
+Current behavior:
+
+- short press: existing dictation behavior
+- long press `3s`: execute reset
+- while holding: show a `Press to reset` capsule HUD
+
+This gives a no-terminal escape hatch when the local state machine drifts.
+
 ## Why A Separate Reset Script Exists
 
 The upstream install gave a good base, but the local workflow accumulated runtime state in `/tmp/dji-dictation`.
@@ -48,6 +60,20 @@ This preserved:
 - existing `confirm`
 
 and only changed the start/stop trigger shape.
+
+## Why Long-hold Reset Was Added
+
+Once the short-press dictation path became stable, the remaining ergonomic problem was runtime recovery:
+
+- the workflow could still get stuck
+- opening a terminal just to run `micReset` was unnecessary friction
+
+So the DJI button itself gained a second gesture:
+
+- press briefly for normal dictation actions
+- hold for `3s` for reset
+
+This keeps recovery on the same physical device as the rest of the voice flow.
 
 ## Why Manual GUI Fallback Was Added
 
