@@ -34,16 +34,6 @@ Purpose:
 - clear `/tmp/dji-dictation` runtime state
 - clear Karabiner state variables `dji_watching` and `dji_ready_to_send`
 
-### 1.5. DJI long-hold reset
-
-Current local Karabiner rule adds a dedicated reset path on the DJI button:
-
-- short press keeps the normal dictation flow
-- long press `3s` triggers reset
-- while holding, the HUD shows `Press to reset`
-
-This is bound to the DJI Mic button only, not keyboard `Fn`.
-
 ### 2. Single press mapped to spaced double `fn`
 
 Current local Karabiner rule no longer emits one `fn`.
