@@ -16,6 +16,7 @@ It currently does two things:
 
 1. remove runtime files under `/tmp/dji-dictation`
 2. reset Karabiner variables:
+   - `dji_dictation_active=0`
    - `dji_watching=0`
    - `dji_ready_to_send=0`
 
@@ -73,7 +74,7 @@ There are two different timers worth knowing:
 
 Current value:
 
-- `1.2s`
+- `1.5s`
 
 Meaning:
 
@@ -86,13 +87,13 @@ Location:
 
 Search key:
 
-- `MANUAL_CONFIRM_FALLBACK_SECONDS`
+- `DJI_MANUAL_CONFIRM_FALLBACK_SECONDS`
 
 ### 2. Review/send window
 
 Current value:
 
-- `8s`
+- `3s`
 
 Meaning:
 
@@ -129,11 +130,27 @@ Raise:
 
 Good candidates:
 
-- `6`
-- `8`
+- `3`
+- `4`
+- `5`
 - `10`
 
 Use this when you can already enter ready-to-send state, but the confirm window expires too quickly.
+
+### Reduce dead-air wait before cleanup
+
+Current values:
+
+- `WATCH_MAX_POLLS=80`
+- `WATCH_POLL_INTERVAL=0.1`
+- `NO_RECORD_LOG_AFTER_POLLS=50`
+
+Meaning:
+
+- if no usable completion signal arrives, the GUI path times out in about `8s`
+- a “still no record” log appears around `5s`
+
+Use this when HUD should disappear faster after a failed recognition round.
 
 ### Reset after every tuning change
 

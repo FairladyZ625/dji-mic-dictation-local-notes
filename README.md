@@ -26,8 +26,10 @@ An open-source, machine-verified reference repo for a working `DJI Mic Mini + Ka
 - `Fn` 单按一次会被 Karabiner 映射成一组带间隔的双击 `fn`
 - DJI Mic Mini 按钮走同一套开始/结束逻辑
 - `micReset` 可以在状态机乱掉时一键清理 `/tmp/dji-dictation`
-- 当前 GUI 手动发送 fallback 阈值为 `1.2s`
-- 当前 review/send window 配置为 `8s`
+- 当前 GUI 发送方式为 `key code 36`
+- 当前 GUI 手动发送 fallback 阈值为 `1.5s`
+- 当前 review/send window 配置为 `3s`
+- 当前无记录等待上限约为 `8s`
 
 ## One-command Restore
 
@@ -97,6 +99,12 @@ micReset
 - [RECOVERY_AND_TUNING.md](./RECOVERY_AND_TUNING.md)
 - [snapshots/dictation-enter.sh](./snapshots/dictation-enter.sh)
 - [snapshots/fn-dictation-rule.json](./snapshots/fn-dictation-rule.json)
+
+这轮修复后，仓库里的快照还包含这些稳定性补丁：
+
+- `cleanup()` 同步清 Karabiner 变量，避免 HUD 超时后下一次按键还被误判成 `preconfirm`
+- `save` 分支主动写回 `dji_dictation_active=1`，避免 shell 和 Karabiner 异步竞态
+- GUI 发送默认走 `key code 36`
 
 ## License
 

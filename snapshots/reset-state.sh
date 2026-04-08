@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
 set -euo pipefail
 
-STATE_DIR="/tmp/dji-dictation"
-KARABINER_CLI="/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli"
+STATE_DIR="${STATE_DIR:-/tmp/dji-dictation}"
+KCLI="${KCLI:-/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli}"
 
 rm -f \
   "$STATE_DIR/mode" \
@@ -19,8 +20,8 @@ rm -f \
 
 rm -rf "$STATE_DIR/send_consumed.lock"
 
-if [ -x "$KARABINER_CLI" ]; then
-  "$KARABINER_CLI" --set-variables '{"dji_watching":0,"dji_ready_to_send":0}'
+if [ -x "$KCLI" ]; then
+  "$KCLI" --set-variables '{"dji_watching":0,"dji_ready_to_send":0}' >/dev/null 2>&1 || true
 fi
 
 echo "dji-mic-dictation state reset"

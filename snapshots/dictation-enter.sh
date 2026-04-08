@@ -31,6 +31,9 @@ NO_RECORD_LOG_AFTER_POLLS="${NO_RECORD_LOG_AFTER_POLLS:-100}"
 NO_RECORD_LOG_LABEL="${NO_RECORD_LOG_LABEL:-10s}"
 STALE_CHECK_EVERY_POLLS="${STALE_CHECK_EVERY_POLLS:-50}"
 STALE_SECONDS="${STALE_SECONDS:-5}"
+SESSION_TTL_SECONDS="${SESSION_TTL_SECONDS:-45}"
+ACTIVE_STATE_WAIT_INTERVAL="${ACTIVE_STATE_WAIT_INTERVAL:-0.02}"
+ACTIVE_STATE_WAIT_POLLS="${ACTIVE_STATE_WAIT_POLLS:-15}"
 PYTHON3_BIN="${PYTHON3_BIN:-$(command -v python3 2>/dev/null)}"
 OSASCRIPT_BIN="${OSASCRIPT_BIN:-/usr/bin/osascript}"
 AFPLAY_BIN="${AFPLAY_BIN:-/usr/bin/afplay}"
@@ -40,6 +43,8 @@ DJI_CONFIG_FILE="${DJI_CONFIG_FILE:-$DJI_CONFIG_DIR/config.env}"
 DJI_ENABLE_AUDIO_FEEDBACK="${DJI_ENABLE_AUDIO_FEEDBACK:-1}"
 DJI_PRECONFIRM_SOUND_NAME="${DJI_PRECONFIRM_SOUND_NAME:-ready}"
 DJI_REVIEW_WINDOW_SECONDS="${DJI_REVIEW_WINDOW_SECONDS:-}"
+DJI_MANUAL_CONFIRM_FALLBACK_SECONDS="${DJI_MANUAL_CONFIRM_FALLBACK_SECONDS:-1.5}"
+DJI_GUI_SEND_STYLE="${DJI_GUI_SEND_STYLE:-keycode}"
 SOUNDS_DIR="${SOUNDS_DIR:-}"
 if [ -z "$SOUNDS_DIR" ]; then
 	_sd="$(cd "$(dirname "$0")/../sounds" 2>/dev/null && pwd)"
@@ -660,7 +665,7 @@ DJI_ENABLE_AUDIO_FEEDBACK="$(normalize_toggle "$DJI_ENABLE_AUDIO_FEEDBACK" 1)"
 DJI_PRECONFIRM_SOUND_NAME="$(normalize_sound_name "$DJI_PRECONFIRM_SOUND_NAME")"
 DJI_ENABLE_READY_HUD="$(normalize_toggle "$DJI_ENABLE_READY_HUD" 1)"
 CONFIRM_WINDOW="$(normalize_duration_seconds "${DJI_REVIEW_WINDOW_SECONDS:-$CONFIRM_WINDOW}" 3)"
-MANUAL_CONFIRM_FALLBACK_SECONDS="$(normalize_duration_seconds "${DJI_MANUAL_CONFIRM_FALLBACK_SECONDS:-1.2}" 1.2)"
+MANUAL_CONFIRM_FALLBACK_SECONDS="$(normalize_duration_seconds "${DJI_MANUAL_CONFIRM_FALLBACK_SECONDS:-1.5}" 1.5)"
 
 timestamp() {
 	if [ -n "$PYTHON3_BIN" ]; then
@@ -677,28 +682,6 @@ PY
 
 utc_timestamp_ms() {
 	"$PYTHON3_BIN" -c "from datetime import datetime,timezone;t=datetime.now(timezone.utc);print(t.strftime('%Y-%m-%dT%H:%M:%S.')+f'{t.microsecond//1000:03d}Z')" 2>/dev/null
-}
-
-save_ts_age_seconds() {
-	local save_ts
-	save_ts="$(read_file save_ts)"
-	[ -n "$save_ts" ] || return 1
-	if [ -n "$PYTHON3_BIN" ]; then
-		SAVE_TS="$save_ts" "$PYTHON3_BIN" - <<'PY' 2>/dev/null
-from datetime import datetime, timezone
-import os
-
-raw = os.environ.get("SAVE_TS", "").strip()
-if not raw:
-    raise SystemExit(1)
-
-stamp = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-delta = datetime.now(timezone.utc) - stamp
-print(f"{max(0.0, delta.total_seconds()):.3f}")
-PY
-	else
-		return 1
-	fi
 }
 
 log() { /usr/bin/printf '%s %s\n' "$(timestamp)" "$*" >>"$LOG"; }
@@ -809,7 +792,9 @@ cleanup() {
 		return 0
 	fi
 	dismiss_ready_hud "$expected_session_id"
+	set_vars '{"dji_dictation_active":0,"dji_watching":0,"dji_ready_to_send":0,"dji_internal_double_fn":0}'
 	/bin/rm -f "$STATE_DIR"/{mode,pane_id,watcher.pid,pending_confirm,save_ts,db_anchor_rowid,db_anchor_updated_at,ready_hud.pid,session_id,window_deadline,save_in_progress}
+	/bin/rm -rf "$STATE_DIR/send_consumed.lock"
 }
 
 set_vars() { "$KCLI" --set-variables "$1" 2>/dev/null; }
@@ -884,6 +869,105 @@ deadline_has_remaining() {
 	local remaining
 	remaining="$(remaining_deadline_seconds "$deadline")"
 	awk -v remaining="$remaining" 'BEGIN { exit !(remaining > 0) }'
+}
+
+session_age_seconds() {
+	local save_ts
+	save_ts="$(read_file save_ts)"
+	[ -n "$save_ts" ] || return 1
+	if [ -n "$PYTHON3_BIN" ]; then
+		SAVE_TS="$save_ts" "$PYTHON3_BIN" - <<'PY' 2>/dev/null
+from datetime import datetime, timezone
+import os
+save_ts = os.environ.get("SAVE_TS", "")
+if not save_ts:
+    raise SystemExit(1)
+save_dt = datetime.strptime(save_ts, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+print(f"{max(0.0, (datetime.now(timezone.utc) - save_dt).total_seconds()):.3f}")
+PY
+	else
+		return 1
+	fi
+}
+
+session_is_active() {
+	[ -n "$(current_session_id)" ] || return 1
+	[ -n "$(read_file mode)" ] || return 1
+	[ -n "$(read_file save_ts)" ] || return 1
+	return 0
+}
+
+session_is_stale() {
+	local age
+	age="$(session_age_seconds)" || return 1
+	awk -v age="$age" -v ttl="$SESSION_TTL_SECONDS" 'BEGIN { exit !(age > ttl) }'
+}
+
+watcher_is_running() {
+	local pid
+	pid="$(read_file watcher.pid)"
+	[ -n "$pid" ] && /bin/kill -0 "$pid" 2>/dev/null
+}
+
+window_is_active() {
+	local deadline
+	deadline="$(read_file window_deadline)"
+	[ -n "$deadline" ] || return 1
+	deadline_has_remaining "$deadline"
+}
+
+wait_for_running_watcher() {
+	local i=0
+	while [ $i -lt "$ACTIVE_STATE_WAIT_POLLS" ]; do
+		watcher_is_running && return 0
+		/bin/sleep "$ACTIVE_STATE_WAIT_INTERVAL"
+		i=$((i + 1))
+	done
+	return 1
+}
+
+wait_for_active_window() {
+	local i=0
+	while [ $i -lt "$ACTIVE_STATE_WAIT_POLLS" ]; do
+		window_is_active && return 0
+		/bin/sleep "$ACTIVE_STATE_WAIT_INTERVAL"
+		i=$((i + 1))
+	done
+	return 1
+}
+
+recover_runtime_state() {
+	if ! session_is_active; then
+		if [ -n "$(read_file pending_confirm)" ] || [ -n "$(read_file watcher.pid)" ] || [ -n "$(read_file window_deadline)" ]; then
+			log "runtime_recovery orphaned_state cleanup"
+			cleanup
+		fi
+		return 0
+	fi
+
+	if session_is_stale; then
+		log "runtime_recovery stale_session cleanup ttl=${SESSION_TTL_SECONDS}s"
+		kill_old_watcher
+		cleanup
+		return 0
+	fi
+
+	if [ -n "$(read_file watcher.pid)" ] && ! watcher_is_running; then
+		log "runtime_recovery dead_watcher cleanup"
+		/bin/rm -f "$STATE_DIR/watcher.pid"
+		set_vars '{"dji_watching":0}'
+	fi
+
+	if [ -n "$(read_file window_deadline)" ] && ! window_is_active; then
+		log "runtime_recovery expired_window cleanup"
+		/bin/rm -f "$STATE_DIR/window_deadline"
+		set_vars '{"dji_ready_to_send":0}'
+	fi
+
+	if [ -f "$STATE_DIR/pending_confirm" ] && ! watcher_is_running && ! window_is_active; then
+		log "runtime_recovery stray_pending_confirm cleanup"
+		/bin/rm -f "$STATE_DIR/pending_confirm"
+	fi
 }
 
 sleep_until_deadline() {
@@ -1024,12 +1108,17 @@ typeless_check_stale() {
 
 gui_send_enter() {
 	local bundle
+	local send_statement
+	case "$DJI_GUI_SEND_STYLE" in
+	keystroke) send_statement='keystroke return' ;;
+	*) send_statement='key code 36' ;;
+	esac
 	bundle="$("$OSASCRIPT_BIN" -e \
-		'tell application "System Events"
+		"tell application \"System Events\"
 			set bid to bundle identifier of first application process whose frontmost is true
-			if bid is not "com.googlecode.iterm2" then keystroke return
+			if bid is not \"com.googlecode.iterm2\" then ${send_statement}
 			return bid
-		end tell' 2>/dev/null)" || {
+		end tell" 2>/dev/null)" || {
 		local status=$?
 		log "gui_send_enter failed frontmost_lookup status=${status}"
 		return "$status"
@@ -1042,7 +1131,7 @@ gui_send_enter() {
 			return "$status"
 		}
 	fi
-	log "gui_send_enter: $bundle"
+	log "gui_send_enter: $bundle send_style=${DJI_GUI_SEND_STYLE}"
 }
 
 transcript_ready_since_save() {
@@ -1055,6 +1144,25 @@ transcript_ready_since_save() {
 	anchor_updated_at="$(read_file db_anchor_updated_at)"
 	done_status="$(typeless_check_done "$anchor_rowid" "$anchor_updated_at")"
 	[ "$done_status" = "transcript" ]
+}
+
+save_ts_age_seconds() {
+	local save_ts
+	save_ts="$(read_file save_ts)"
+	[ -n "$save_ts" ] || return 1
+	if [ -n "$PYTHON3_BIN" ]; then
+		SAVE_TS="$save_ts" "$PYTHON3_BIN" - <<'PY' 2>/dev/null
+from datetime import datetime, timezone
+import os
+save_ts = os.environ.get("SAVE_TS", "")
+if not save_ts:
+    raise SystemExit(1)
+save_dt = datetime.strptime(save_ts, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+print(f"{max(0.0, (datetime.now(timezone.utc) - save_dt).total_seconds()):.3f}")
+PY
+	else
+		return 1
+	fi
 }
 
 manual_gui_confirm_fallback_ready() {
@@ -1108,6 +1216,8 @@ if [ "$1" = "route" ]; then
 	set -- "$action" "$@"
 fi
 
+recover_runtime_state
+
 case "$1" in
 save)
 	kill_old_watcher
@@ -1155,6 +1265,7 @@ save)
 		write_file mode gui
 	fi
 	write_file session_id "$session_id"
+	set_vars '{"dji_dictation_active":1,"dji_watching":0,"dji_ready_to_send":0,"dji_internal_double_fn":0}'
 	/bin/rm -f "$STATE_DIR/save_in_progress"
 	;;
 
@@ -1200,8 +1311,7 @@ watch)
 			if [ $has_record -eq 1 ] && [ $((i % STALE_CHECK_EVERY_POLLS)) -eq 0 ]; then
 				if [ -n "$(typeless_check_stale "$anchor_rowid" "$anchor_updated_at")" ]; then
 					log "watch tmux stale_record (${i} polls ~$((i / 10))s), abort"
-					clear_watch_state "$watch_session_id"
-					/bin/rm -f "$STATE_DIR/watcher.pid"
+					cleanup "$watch_session_id"
 					exit 0
 				fi
 			fi
@@ -1227,13 +1337,11 @@ watch)
 				enter_ready_window tmux "$i" "$pending_confirm_polls" "$watch_session_id"
 			fi
 		elif [ $changed -eq 1 ] && [ "$done_status" = "dismissed" ]; then
-			clear_watch_state "$watch_session_id"
+			cleanup "$watch_session_id"
 			log "watch tmux dismissed (${i} polls ~$((i / 10))s)"
-			/bin/rm -f "$STATE_DIR/watcher.pid"
 		else
-			clear_watch_state "$watch_session_id"
-			log "watch tmux no_change (timeout 30s)"
-			/bin/rm -f "$STATE_DIR/watcher.pid"
+			cleanup "$watch_session_id"
+			log "watch tmux no_change (timeout ${WATCH_MAX_POLLS}x${WATCH_POLL_INTERVAL}s)"
 		fi
 
 	elif [ "$mode" = "gui" ]; then
@@ -1263,8 +1371,7 @@ watch)
 			if [ $has_record -eq 1 ] && [ $((i % STALE_CHECK_EVERY_POLLS)) -eq 0 ]; then
 				if [ -n "$(typeless_check_stale "$anchor_rowid" "$anchor_updated_at")" ]; then
 					log "watch gui stale_record (${i} polls ~$((i / 10))s), abort"
-					clear_watch_state "$watch_session_id"
-					/bin/rm -f "$STATE_DIR/watcher.pid"
+					cleanup "$watch_session_id"
 					exit 0
 				fi
 			fi
@@ -1290,17 +1397,15 @@ watch)
 				enter_ready_window gui "$i" "$pending_confirm_polls" "$watch_session_id"
 			fi
 		elif [ $changed -eq 1 ] && [ "$done_status" = "dismissed" ]; then
-			clear_watch_state "$watch_session_id"
+			cleanup "$watch_session_id"
 			log "watch gui dismissed (${i} polls ~$((i / 10))s)"
-			/bin/rm -f "$STATE_DIR/watcher.pid"
 		else
-			clear_watch_state "$watch_session_id"
-			log "watch gui no_change (timeout 30s)"
-			/bin/rm -f "$STATE_DIR/watcher.pid"
+			cleanup "$watch_session_id"
+			log "watch gui no_change (timeout ${WATCH_MAX_POLLS}x${WATCH_POLL_INTERVAL}s)"
 		fi
 	else
 		log "watch unknown mode, exit"
-		/bin/rm -f "$STATE_DIR/watcher.pid"
+		cleanup "$watch_session_id"
 	fi
 	;;
 
@@ -1309,11 +1414,20 @@ open-window)
 	if [ -z "$open_window_session_id" ]; then
 		open_window_session_id="$(wait_for_save_state_value session_id)"
 	fi
-	[ -n "$open_window_session_id" ] || exit 0
+	if [ -z "$open_window_session_id" ] || ! session_is_active; then
+		log "open_window ignored no_active_session"
+		cleanup
+		exit 0
+	fi
 	reuse_or_open_send_window open_window "$open_window_session_id" >/dev/null
 	;;
 
 preconfirm)
+	if ! session_is_active; then
+		log "preconfirm ignored no_active_session"
+		cleanup
+		exit 0
+	fi
 	dismiss_ready_hud
 	if transcript_ready_since_save; then
 		claim_send_state preconfirm || exit 0
@@ -1341,6 +1455,10 @@ preconfirm)
 			exit "$send_status"
 		fi
 	else
+		if ! watcher_is_running && ! wait_for_running_watcher && ! window_is_active; then
+			log "preconfirm ignored watcher_not_running"
+			exit 0
+		fi
 		write_file pending_confirm 1
 		play_feedback_sound "$DJI_PRECONFIRM_SOUND_NAME"
 		log "preconfirm queued"
@@ -1348,6 +1466,16 @@ preconfirm)
 	;;
 
 confirm)
+	if ! session_is_active; then
+		log "confirm ignored no_active_session"
+		cleanup
+		exit 0
+	fi
+	if ! window_is_active && ! wait_for_active_window; then
+		log "confirm ignored no_ready_window"
+		cleanup
+		exit 0
+	fi
 	claim_send_state confirm || exit 0
 	play_feedback_sound "$DJI_PRECONFIRM_SOUND_NAME"
 	if send_current_mode_enter confirm; then

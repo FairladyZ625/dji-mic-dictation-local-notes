@@ -15,12 +15,14 @@
 
 ## Active Settings
 
-- Karabiner profile: `Default profile`
+- Karabiner profile: `DJI Mic Dictation`
 - Trigger mode: `keyboard+dji`
 - Notification sound: `Sosumi`
 - Ready HUD: enabled
-- Review/send window: `8s`
-- Manual GUI confirm fallback: `1.2s`
+- Review/send window: `3s`
+- Manual GUI confirm fallback: `1.5s`
+- GUI send style: `keycode`
+- Watch timeout upper bound: `~8s`
 
 ## Active Local Overrides
 
@@ -61,8 +63,10 @@ Typeless is no longer treated as the only completion source.
 Current local script behavior:
 
 - if GUI mode does not observe a Typeless transcript completion
-- and elapsed time since `save_ts` is at least `1.2s`
+- and elapsed time since `save_ts` is at least `1.5s`
 - the next `preconfirm` press is treated as a manual send fallback
+- GUI send uses `key code 36`
+- timeout cleanup also resets Karabiner variables so the next round starts cleanly
 
 This is the local adaptation that made the new input method usable without depending on Typeless DB updates.
 
