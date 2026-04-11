@@ -1,5 +1,5 @@
 {
-  "profile": "DJI Mic Dictation",
+  "profile": "Default profile",
   "rule": {
     "description": "Fn dictation toggle + confirm/preconfirm to send Enter",
     "manipulators": [

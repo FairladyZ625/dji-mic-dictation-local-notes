@@ -2,11 +2,11 @@
   "manifestVersion": 1,
   "installedMode": "install",
   "packageVersion": "0.1.0",
-  "profileName": "DJI Mic Dictation",
+  "profileName": "Default profile",
   "profileStrategy": "existing",
   "sourceProfileName": null,
   "triggerMode": "keyboard+dji",
   "scriptTargetPath": "/Users/lizeyu/.config/karabiner/scripts/dictation-enter.sh",
   "configFilePath": "/Users/lizeyu/.config/dji-mic-dictation/config.env",
-  "updatedAt": "2026-03-23T01:56:31.978Z"
+  "updatedAt": "2026-03-21T01:45:30.493Z"
 }

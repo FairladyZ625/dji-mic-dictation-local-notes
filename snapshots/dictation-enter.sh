@@ -838,6 +838,14 @@ finalize_send_state() {
 	set_vars '{"dji_watching":0,"dji_ready_to_send":0}'
 }
 
+force_cleanup_after_final_send_attempt() {
+	local source_label="$1"
+	local expected_session_id="${2:-}"
+	log "${source_label} force_cleanup"
+	kill_old_watcher
+	cleanup "$expected_session_id"
+}
+
 window_deadline_timestamp() {
 	local duration="$1"
 	if [ -n "$PYTHON3_BIN" ]; then
@@ -1447,11 +1455,11 @@ preconfirm)
 		if send_current_mode_enter preconfirm_manual; then
 			log "preconfirm manual_fallback_send threshold=${MANUAL_CONFIRM_FALLBACK_SECONDS}s"
 			finalize_send_state
-			kill_old_watcher
-			cleanup
+			force_cleanup_after_final_send_attempt preconfirm_manual_success
 		else
 			send_status=$?
-			release_send_state
+			log "preconfirm manual_fallback_send_failed status=${send_status}"
+			force_cleanup_after_final_send_attempt preconfirm_manual_failed
 			exit "$send_status"
 		fi
 	else
@@ -1480,11 +1488,11 @@ confirm)
 	play_feedback_sound "$DJI_PRECONFIRM_SOUND_NAME"
 	if send_current_mode_enter confirm; then
 		finalize_send_state
-		kill_old_watcher
-		cleanup
+		force_cleanup_after_final_send_attempt confirm_success
 	else
 		send_status=$?
-		release_send_state
+		log "confirm send_failed status=${send_status}"
+		force_cleanup_after_final_send_attempt confirm_failed
 		exit "$send_status"
 	fi
 	;;

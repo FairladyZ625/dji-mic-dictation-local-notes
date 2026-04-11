@@ -6,12 +6,13 @@
 - Live Karabiner script exists at `~/.config/karabiner/scripts/dictation-enter.sh`
 - Live Karabiner CLI exists at `/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli`
 - `micReset` resolves from `~/.local/bin/micReset`
-- Current selected Karabiner profile is `DJI Mic Dictation`
+- Current selected Karabiner profile is `Default profile`
 - Current rule uses spaced double `fn` emission via `fn -> vk_none -> fn`
 - Current GUI send style is `key code 36`
 - Current manual GUI send fallback threshold is `1.5s`
-- Current review/send window is `3s`
+- Current review/send window is `8s`
 - Current watch timeout is about `8s`
+- Current final-send branches force cleanup on both success and failure
 
 ## Key Conclusions
 

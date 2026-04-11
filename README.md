@@ -28,8 +28,9 @@ An open-source, machine-verified reference repo for a working `DJI Mic Mini + Ka
 - `micReset` 可以在状态机乱掉时一键清理 `/tmp/dji-dictation`
 - 当前 GUI 发送方式为 `key code 36`
 - 当前 GUI 手动发送 fallback 阈值为 `1.5s`
-- 当前 review/send window 配置为 `3s`
+- 当前 review/send window 配置为 `8s`
 - 当前无记录等待上限约为 `8s`
+- 第三下最终发送后，无论成功还是失败，状态机都会强制收口，保证下一轮从干净状态开始
 
 ## One-command Restore
 

@@ -78,7 +78,7 @@ Current value:
 
 Meaning:
 
-- after stopping voice input, the script waits at least `1.2s`
+- after stopping voice input, the script waits at least `1.5s`
 - after that, a `preconfirm` press can directly send `Enter` even without Typeless completion
 
 Location:
@@ -93,11 +93,11 @@ Search key:
 
 Current value:
 
-- `3s`
+- `8s`
 
 Meaning:
 
-- once content is considered ready, the ready-to-send confirm window lasts `3s`
+- once content is considered ready, the ready-to-send confirm window lasts `8s`
 
 Source:
 
@@ -151,6 +151,18 @@ Meaning:
 - a “still no record” log appears around `5s`
 
 Use this when HUD should disappear faster after a failed recognition round.
+
+## Final Send Behavior
+
+The current local script treats the final send press as a hard close action.
+
+Meaning:
+
+- on `confirm` send success, it sends and then force-cleans the runtime state
+- on `confirm` send failure, it still force-cleans the runtime state
+- on `preconfirm_manual` success or failure, it also force-cleans the runtime state
+
+This was added intentionally so the next dictation round starts cleanly even if the prior round failed at the final send stage.
 
 ### Reset after every tuning change
 

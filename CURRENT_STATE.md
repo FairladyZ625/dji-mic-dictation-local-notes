@@ -15,11 +15,11 @@
 
 ## Active Settings
 
-- Karabiner profile: `DJI Mic Dictation`
+- Karabiner profile: `Default profile`
 - Trigger mode: `keyboard+dji`
 - Notification sound: `Sosumi`
 - Ready HUD: enabled
-- Review/send window: `3s`
+- Review/send window: `8s`
 - Manual GUI confirm fallback: `1.5s`
 - GUI send style: `keycode`
 - Watch timeout upper bound: `~8s`
@@ -67,6 +67,7 @@ Current local script behavior:
 - the next `preconfirm` press is treated as a manual send fallback
 - GUI send uses `key code 36`
 - timeout cleanup also resets Karabiner variables so the next round starts cleanly
+- final-send branches now force cleanup even on send failure, so the next round does not inherit stale ready/watch state
 
 This is the local adaptation that made the new input method usable without depending on Typeless DB updates.
 
