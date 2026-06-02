@@ -36,14 +36,12 @@ Purpose:
 - clear `/tmp/dji-dictation` runtime state
 - clear Karabiner state variables `dji_watching` and `dji_ready_to_send`
 
-### 2. Single press mapped to spaced double `fn`
+### 2. Single press emits one `fn`
 
-Current local Karabiner rule no longer emits one `fn`.
+Current local Karabiner rule emits one `fn` per real press again.
 It emits:
 
 1. `fn` with `hold_down_milliseconds: 80`
-2. `vk_none` with `hold_down_milliseconds: 80`
-3. `fn` with `hold_down_milliseconds: 80`
 
 This is applied to:
 

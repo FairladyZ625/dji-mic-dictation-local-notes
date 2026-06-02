@@ -102,14 +102,6 @@
             "key_code": "fn"
           },
           {
-            "hold_down_milliseconds": 80,
-            "key_code": "vk_none"
-          },
-          {
-            "hold_down_milliseconds": 80,
-            "key_code": "fn"
-          },
-          {
             "set_variable": {
               "name": "dji_internal_double_fn",
               "value": 0
@@ -170,14 +162,6 @@
               "name": "dji_internal_double_fn",
               "value": 1
             }
-          },
-          {
-            "hold_down_milliseconds": 80,
-            "key_code": "fn"
-          },
-          {
-            "hold_down_milliseconds": 80,
-            "key_code": "vk_none"
           },
           {
             "hold_down_milliseconds": 80,
@@ -353,14 +337,6 @@
             "key_code": "fn"
           },
           {
-            "hold_down_milliseconds": 80,
-            "key_code": "vk_none"
-          },
-          {
-            "hold_down_milliseconds": 80,
-            "key_code": "fn"
-          },
-          {
             "set_variable": {
               "name": "dji_internal_double_fn",
               "value": 0
@@ -425,14 +401,6 @@
               "name": "dji_internal_double_fn",
               "value": 1
             }
-          },
-          {
-            "hold_down_milliseconds": 80,
-            "key_code": "fn"
-          },
-          {
-            "hold_down_milliseconds": 80,
-            "key_code": "vk_none"
           },
           {
             "hold_down_milliseconds": 80,

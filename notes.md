@@ -7,7 +7,7 @@
 - Live Karabiner CLI exists at `/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli`
 - `micReset` resolves from `~/.local/bin/micReset`
 - Current selected Karabiner profile is `Default profile`
-- Current rule uses spaced double `fn` emission via `fn -> vk_none -> fn`
+- Current rule uses single `fn` emission for keyboard and DJI start/stop triggers
 - Current GUI send style is `key code 36`
 - Current manual GUI send fallback threshold is `1.5s`
 - Current review/send window is `8s`

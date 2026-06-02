@@ -30,16 +30,17 @@ Once that state drifted, the quickest fix was not reinstalling Karabiner or rewr
 - does not rewrite Karabiner profiles
 - only clears runtime state
 
-## Why Single Press Was Remapped
+## Why Single Fn Press Is Used Again
 
-The new input method expects:
+The current Doubao voice input behavior expects:
 
-- double press to start
-- double press to stop
+- single `fn` press to start recording
+- single `fn` press to stop recording
 
-Instead of rewriting the whole workflow, the local Karabiner rule was narrowed to one behavior change:
+The local Karabiner rule therefore no longer expands one real press into a spaced double `fn`.
+Each keyboard or DJI trigger now emits:
 
-- one real press now emits a spaced double `fn`
+- one `fn` with `hold_down_milliseconds: 80`
 
 This preserved:
 

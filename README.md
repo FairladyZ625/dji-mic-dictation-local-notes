@@ -23,7 +23,7 @@ An open-source, machine-verified reference repo for a working `DJI Mic Mini + Ka
 
 ## 当前行为
 
-- `Fn` 单按一次会被 Karabiner 映射成一组带间隔的双击 `fn`
+- `Fn` 单按一次会被 Karabiner 透传成单次 `fn`，用于适配当前豆包语音输入的单击开始/停止录音行为
 - DJI Mic Mini 按钮走同一套开始/结束逻辑
 - `micReset` 可以在状态机乱掉时一键清理 `/tmp/dji-dictation`
 - 当前 GUI 发送方式为 `key code 36`
@@ -63,7 +63,7 @@ It copies the snapshotted files in this repo back to the live local paths:
 - [CURRENT_STATE.md](./CURRENT_STATE.md)
   当前本机安装路径、关键脚本位置、当前调参值和实际触发语义。
 - [RECOVERY_AND_TUNING.md](./RECOVERY_AND_TUNING.md)
-  记录 `micReset`、双击 `fn` 映射、无 Typeless 场景下的 manual fallback 逻辑，以及后续怎么继续调参。
+  记录 `micReset`、单击 `fn` 触发语义、无 Typeless 场景下的 manual fallback 逻辑，以及后续怎么继续调参。
 - [task_plan.md](./task_plan.md)
   这次沉淀工作的最小计划。
 - [notes.md](./notes.md)
